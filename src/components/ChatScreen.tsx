@@ -1,11 +1,18 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { PromptCard } from "@/data/prompts";
+import { PromptCard, MODELS } from "@/data/prompts";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
+}
+
+interface ModelAvailability {
+  id: string;
+  name: string;
+  desc: string;
+  available: boolean;
 }
 
 interface ChatScreenProps {
@@ -13,12 +20,16 @@ interface ChatScreenProps {
   onBack: () => void;
 }
 
+const MODEL_ORDER = ["gemini", "claude", "chatgpt", "perplexity"];
+
 export default function ChatScreen({ card, onBack }: ChatScreenProps) {
   const [messages, setMessages] = useState<Message[]>([
     { role: "user", content: card.prompt },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [selectedModel, setSelectedModel] = useState(card.tool);
+  const [modelAvailability, setModelAvailability] = useState<ModelAvailability[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const hasSentInitial = useRef(false);
@@ -29,6 +40,16 @@ export default function ChatScreen({ card, onBack }: ChatScreenProps) {
 
   useEffect(scrollToBottom, [messages, loading]);
 
+  // Fetch model availability
+  useEffect(() => {
+    fetch("/api/models")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.models) setModelAvailability(data.models);
+      })
+      .catch(() => {});
+  }, []);
+
   // Auto-focus input
   useEffect(() => {
     inputRef.current?.focus();
@@ -38,17 +59,17 @@ export default function ChatScreen({ card, onBack }: ChatScreenProps) {
   useEffect(() => {
     if (hasSentInitial.current) return;
     hasSentInitial.current = true;
-    sendToAPI([{ role: "user" as const, content: card.prompt }]);
+    sendToAPI([{ role: "user" as const, content: card.prompt }], card.tool);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function sendToAPI(msgs: Message[]) {
+  async function sendToAPI(msgs: Message[], model?: string) {
     setLoading(true);
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: msgs }),
+        body: JSON.stringify({ messages: msgs, model: model || selectedModel }),
       });
       const data = await res.json();
       if (data.error) {
@@ -90,9 +111,17 @@ export default function ChatScreen({ card, onBack }: ChatScreenProps) {
     }
   }
 
+  // Check if a model is available
+  function isAvailable(modelId: string): boolean {
+    const m = modelAvailability.find((x) => x.id === modelId);
+    return m ? m.available : false;
+  }
+
+  const currentModelName = MODELS[selectedModel]?.name || selectedModel;
+
   return (
     <>
-      {/* Top bar - no tab bar visible */}
+      {/* Top bar */}
       <div
         className="topbar"
         style={{
@@ -109,17 +138,48 @@ export default function ChatScreen({ card, onBack }: ChatScreenProps) {
             </svg>
           </button>
         </div>
-        <span
-          className="topbar-title"
-          style={{
-            maxWidth: "60%",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {card.title}
-        </span>
+        <div style={{ textAlign: "center", flex: 1, minWidth: 0 }}>
+          <span
+            className="topbar-title"
+            style={{
+              display: "block",
+              maxWidth: "100%",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {card.title}
+          </span>
+          <span style={{ fontSize: 11, color: "var(--text-3)", fontWeight: 500 }}>
+            {currentModelName}
+          </span>
+        </div>
         <div className="topbar-right" />
+      </div>
+
+      {/* Model picker */}
+      <div className="model-picker">
+        {MODEL_ORDER.map((id) => {
+          const info = MODELS[id];
+          if (!info) return null;
+          const available = isAvailable(id);
+          const isSelected = selectedModel === id;
+          const isRecommended = card.tool === id;
+
+          return (
+            <button
+              key={id}
+              className={`model-pill${isSelected ? " selected" : ""}${!available ? " unavailable" : ""}`}
+              onClick={() => {
+                if (available && !loading) setSelectedModel(id);
+              }}
+              disabled={loading || !available}
+            >
+              {info.name}
+              {isRecommended && <span className="model-rec">★</span>}
+            </button>
+          );
+        })}
       </div>
 
       {/* Messages area */}

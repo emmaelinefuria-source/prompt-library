@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { PromptCard, COLORS, CATEGORIES, MODELS } from "@/data/prompts";
 
 interface CardDetailProps {
@@ -8,7 +8,7 @@ interface CardDetailProps {
   starred: boolean;
   onToggleStar: (id: string) => void;
   onBack: () => void;
-  onChat: (card: PromptCard) => void;
+  onChat: (card: PromptCard, customPrompt?: string) => void;
 }
 
 export default function CardDetail({
@@ -19,10 +19,39 @@ export default function CardDetail({
   onChat,
 }: CardDetailProps) {
   const [showToast, setShowToast] = useState(false);
+  const [placeholderValues, setPlaceholderValues] = useState<Record<string, string>>({});
 
   const color = COLORS[card.cat] || COLORS.research;
   const catLabel = CATEGORIES[card.cat] || card.cat;
   const model = MODELS[card.tool];
+
+  // Extract unique placeholders from the prompt
+  const placeholders = useMemo(() => {
+    const matches = card.prompt.match(/\[([^\]]+)\]/g);
+    if (!matches) return [];
+    const unique = [...new Set(matches.map((m) => m.slice(1, -1)))];
+    return unique;
+  }, [card.prompt]);
+
+  // Reset placeholder values when card changes
+  useEffect(() => {
+    setPlaceholderValues({});
+  }, [card.id]);
+
+  // Build the customized prompt by replacing placeholders with user values
+  const customizedPrompt = useMemo(() => {
+    let result = card.prompt;
+    for (const ph of placeholders) {
+      const value = placeholderValues[ph];
+      if (value && value.trim()) {
+        // Replace all occurrences of this placeholder
+        result = result.split(`[${ph}]`).join(value.trim());
+      }
+    }
+    return result;
+  }, [card.prompt, placeholders, placeholderValues]);
+
+  const hasAnyValues = Object.values(placeholderValues).some((v) => v && v.trim());
 
   // Auto-copy prompt to clipboard on mount
   useEffect(() => {
@@ -50,6 +79,36 @@ export default function CardDetail({
     });
   }
 
+  // Render the live preview with filled-in values highlighted
+  function renderPreview(text: string) {
+    // Split on placeholders that were replaced (by checking which values exist)
+    // We rebuild by splitting on filled values and remaining placeholders
+    const parts = text.split(/(\[[^\]]+\])/g);
+    return parts.map((part, i) => {
+      if (/^\[.+\]$/.test(part)) {
+        // Still an unfilled placeholder
+        return (
+          <span key={i} className="ph" style={{ color: color.hex }}>
+            {part}
+          </span>
+        );
+      }
+      return part;
+    });
+  }
+
+  function handlePlaceholderChange(name: string, value: string) {
+    setPlaceholderValues((prev) => ({ ...prev, [name]: value }));
+  }
+
+  function handleChatClick() {
+    if (hasAnyValues) {
+      onChat(card, customizedPrompt);
+    } else {
+      onChat(card);
+    }
+  }
+
   return (
     <>
       {/* Top bar */}
@@ -75,7 +134,7 @@ export default function CardDetail({
             className={`star-btn${starred ? " starred" : ""}`}
             onClick={() => onToggleStar(card.id)}
           >
-            {starred ? "★" : "☆"}
+            {starred ? "\u2605" : "\u2606"}
           </button>
         </div>
       </div>
@@ -140,16 +199,48 @@ export default function CardDetail({
             </svg>
             Prompt copied to clipboard
           </div>
+
+          {/* Placeholder editor fields */}
+          {placeholders.length > 0 && (
+            <div className="ph-editor">
+              <div className="det-section-label">Customize Placeholders</div>
+              <div className="ph-fields">
+                {placeholders.map((ph) => (
+                  <div key={ph} className="ph-field">
+                    <label className="ph-field-label">{ph}</label>
+                    <input
+                      type="text"
+                      className="ph-field-input"
+                      placeholder={`Enter ${ph.toLowerCase()}...`}
+                      value={placeholderValues[ph] || ""}
+                      onChange={(e) => handlePlaceholderChange(ph, e.target.value)}
+                      style={{ borderColor: placeholderValues[ph]?.trim() ? color.hex : undefined }}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Live preview */}
+              {hasAnyValues && (
+                <div className="ph-preview">
+                  <div className="det-section-label">Live Preview</div>
+                  <div className="det-prompt-box">
+                    <div className="det-prompt-text">{renderPreview(customizedPrompt)}</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Chat button */}
       <div className="chat-btn-wrap">
-        <button className="chat-btn" onClick={() => onChat(card)}>
+        <button className="chat-btn" onClick={handleChatClick}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
-          Chat with AI
+          {hasAnyValues ? "Chat with Customized Prompt" : "Chat with AI"}
         </button>
       </div>
     </>

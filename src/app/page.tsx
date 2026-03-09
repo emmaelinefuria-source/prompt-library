@@ -111,8 +111,11 @@ export default function App() {
     [customCards]
   );
 
-  function handleChat(card: PromptCard) {
+  const [customPrompt, setCustomPrompt] = useState<string | undefined>(undefined);
+
+  function handleChat(card: PromptCard, prompt?: string) {
     setActiveCard(card);
+    setCustomPrompt(prompt);
     goTo("chat");
   }
 
@@ -192,7 +195,7 @@ export default function App() {
         {/* CHAT */}
         <div className={screenClass("chat")} style={{ background: "var(--bg)" }}>
           {activeCard && currentScreen === "chat" && (
-            <ChatScreen card={activeCard} onBack={goBack} />
+            <ChatScreen card={activeCard} onBack={goBack} customPrompt={customPrompt} />
           )}
         </div>
 

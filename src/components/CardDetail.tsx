@@ -37,9 +37,9 @@ export default function CardDetail({
 
   // Highlight [PLACEHOLDER] text
   function renderPrompt(text: string) {
-    const parts = text.split(/(\[[A-Z0-9_ /&'+.–—-]+\])/g);
+    const parts = text.split(/(\[[^\]]+\])/g);
     return parts.map((part, i) => {
-      if (/^\[[A-Z0-9_ /&'+.–—-]+\]$/.test(part)) {
+      if (/^\[.+\]$/.test(part)) {
         return (
           <span key={i} className="ph" style={{ color: color.hex }}>
             {part}
@@ -81,7 +81,7 @@ export default function CardDetail({
       </div>
 
       {/* Scrollable body */}
-      <div className="scroll-body">
+      <div className="scroll-body" style={{ paddingBottom: 120 }}>
         <div className="detail-body">
           {/* Category badge */}
           <div

@@ -24,8 +24,8 @@ interface LibraryScreenProps {
 
 const FILTER_KEYS = [
   "all", "starred", "canvas",
-  "research", "writing", "ideation",
-  "analysis", "critique", "synthesis",
+  "research", "analysis", "ideation",
+  "critique", "synthesis", "writing", "collins",
 ];
 
 export default function LibraryScreen({

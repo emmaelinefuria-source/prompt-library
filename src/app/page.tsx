@@ -23,7 +23,7 @@ export default function App() {
   const loadedRef = useRef(false);
   const screenRef = useRef<HTMLDivElement>(null);
 
-  // Load persisted state
+  // Load persisted state + handle deep link
   useEffect(() => {
     try {
       const saved = localStorage.getItem("ai-canvas-starred");
@@ -34,6 +34,25 @@ export default function App() {
       if (saved) setCustomCards(JSON.parse(saved));
     } catch {}
     loadedRef.current = true;
+
+    // Deep link: ?card=R01 opens that card's detail screen
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const cardId = params.get("card") || params.get("id");
+      if (cardId) {
+        const allCards = [...CARDS];
+        const card = allCards.find(
+          (c) => c.id.toUpperCase() === cardId.toUpperCase()
+        );
+        if (card) {
+          setActiveCard(card);
+          setCurrentScreen("detail");
+          setPrevScreens(["home"]);
+        }
+        // Clean up URL without reload
+        window.history.replaceState({}, "", window.location.pathname);
+      }
+    } catch {}
   }, []);
 
   // Persist starred (only after initial load)

@@ -43,8 +43,8 @@ interface HomeScreenProps {
 
 const FILTER_KEYS = [
   "all", "starred", "canvas",
-  "research", "writing", "ideation",
-  "analysis", "critique", "synthesis",
+  "research", "analysis", "ideation",
+  "critique", "synthesis", "writing", "collins",
 ];
 
 function getGreeting(): string {

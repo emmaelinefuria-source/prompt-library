@@ -1,123 +1,92 @@
 export interface PromptCard {
   id: string;
+  cat: string;
   title: string;
-  category: string;
-  emoji: string;
-  description: string;
+  tool: string;
+  level: number;
+  tagline: string;
   prompt: string;
+  custom?: boolean;
+  sections?: Record<string, string>;
+  created?: string;
 }
 
-export const prompts: PromptCard[] = [
-  {
-    id: "write-email",
-    title: "Write a Professional Email",
-    category: "Writing",
-    emoji: "✉️",
-    description: "Get help drafting a clear, professional email for any situation.",
-    prompt:
-      "Help me write a professional email. Here's the context: [describe the situation, who you're emailing, and what you need]. Please make it polite, clear, and concise.",
-  },
-  {
-    id: "explain-concept",
-    title: "Explain Like I'm 5",
-    category: "Learning",
-    emoji: "🧒",
-    description: "Get any complex topic explained in simple, easy-to-understand language.",
-    prompt:
-      "Explain [topic] to me like I'm 5 years old. Use simple words, fun examples, and analogies I can relate to.",
-  },
-  {
-    id: "brainstorm",
-    title: "Brainstorm Ideas",
-    category: "Creativity",
-    emoji: "💡",
-    description: "Generate creative ideas for any project, problem, or goal.",
-    prompt:
-      "I need creative ideas for [describe your project or problem]. Give me 10 unique suggestions with a brief explanation for each.",
-  },
-  {
-    id: "summarize",
-    title: "Summarize Text",
-    category: "Productivity",
-    emoji: "📝",
-    description: "Get a quick summary of any long text, article, or document.",
-    prompt:
-      "Summarize the following text in 3-5 bullet points, highlighting the key takeaways:\n\n[paste your text here]",
-  },
-  {
-    id: "debug-help",
-    title: "Fix My Code",
-    category: "Tech",
-    emoji: "🐛",
-    description: "Get help finding and fixing bugs in your code.",
-    prompt:
-      "I have a bug in my code. Here's what's happening: [describe the problem]. Here's my code:\n\n[paste code here]\n\nPlease find the bug, explain what went wrong, and give me the fixed version.",
-  },
-  {
-    id: "meal-plan",
-    title: "Plan My Meals",
-    category: "Lifestyle",
-    emoji: "🍽️",
-    description: "Get a personalized meal plan based on your preferences.",
-    prompt:
-      "Create a meal plan for [number] days. My dietary preferences are: [list any restrictions or preferences]. I want meals that are [easy/quick/healthy/budget-friendly]. Include a shopping list.",
-  },
-  {
-    id: "study-guide",
-    title: "Create a Study Guide",
-    category: "Learning",
-    emoji: "📚",
-    description: "Turn any topic into an organized study guide with key points.",
-    prompt:
-      "Create a comprehensive study guide for [topic/subject]. Include key concepts, definitions, examples, and practice questions. Organize it in a clear, easy-to-follow structure.",
-  },
-  {
-    id: "social-media",
-    title: "Write a Social Post",
-    category: "Writing",
-    emoji: "📱",
-    description: "Create engaging social media content for any platform.",
-    prompt:
-      "Write a [platform: Instagram/Twitter/LinkedIn] post about [topic]. Make it engaging, include relevant hashtags, and match the tone of [casual/professional/fun]. Keep it within the character limit.",
-  },
-  {
-    id: "pros-cons",
-    title: "Pros & Cons Analysis",
-    category: "Productivity",
-    emoji: "⚖️",
-    description: "Get a balanced analysis to help you make better decisions.",
-    prompt:
-      "I'm trying to decide between [option A] and [option B]. Give me a detailed pros and cons list for each, and then give me your recommendation based on the analysis.",
-  },
-  {
-    id: "cover-letter",
-    title: "Write a Cover Letter",
-    category: "Career",
-    emoji: "💼",
-    description: "Generate a compelling cover letter tailored to any job.",
-    prompt:
-      "Write a cover letter for the position of [job title] at [company]. My key qualifications are: [list 3-5 skills/experiences]. Make it enthusiastic but professional, and tailor it to the role.",
-  },
-  {
-    id: "workout",
-    title: "Create a Workout Plan",
-    category: "Lifestyle",
-    emoji: "💪",
-    description: "Get a personalized exercise routine based on your goals.",
-    prompt:
-      "Create a [number]-day workout plan for someone who is [beginner/intermediate/advanced]. My goal is [lose weight/build muscle/improve cardio/general fitness]. I have access to [gym/home equipment/no equipment]. Each workout should take about [time] minutes.",
-  },
-  {
-    id: "translate-tone",
-    title: "Change the Tone",
-    category: "Writing",
-    emoji: "🎭",
-    description: "Rewrite any text in a different tone or style.",
-    prompt:
-      "Rewrite the following text to sound more [formal/casual/friendly/persuasive/humorous]:\n\n[paste your text here]",
-  },
+export const CATEGORIES: Record<string, string> = {
+  research: "Research",
+  writing: "Writing",
+  ideation: "Ideation",
+  analysis: "Analysis",
+  critique: "Critique",
+  synthesis: "Synthesis",
+  canvas: "Canvas",
+  starred: "Starred",
+};
+
+export const COLORS: Record<string, { hex: string; bg: string; b: string }> = {
+  research: { hex: "#4285f4", bg: "rgba(66,133,244,0.13)", b: "rgba(66,133,244,0.28)" },
+  writing: { hex: "#c4885a", bg: "rgba(212,165,116,0.13)", b: "rgba(212,165,116,0.28)" },
+  ideation: { hex: "#10a37f", bg: "rgba(16,163,127,0.13)", b: "rgba(16,163,127,0.28)" },
+  analysis: { hex: "#7c5fcf", bg: "rgba(167,139,250,0.13)", b: "rgba(167,139,250,0.28)" },
+  critique: { hex: "#e86e1a", bg: "rgba(249,115,22,0.13)", b: "rgba(249,115,22,0.28)" },
+  synthesis: { hex: "#d4357a", bg: "rgba(236,72,153,0.13)", b: "rgba(236,72,153,0.28)" },
+  canvas: { hex: "#10a37f", bg: "rgba(16,163,127,0.13)", b: "rgba(16,163,127,0.28)" },
+  starred: { hex: "#f9c74f", bg: "rgba(249,199,79,0.13)", b: "rgba(249,199,79,0.28)" },
+};
+
+export const MODELS: Record<string, { name: string; desc: string }> = {
+  claude: { name: "Claude", desc: "Anthropic · Writing & reasoning" },
+  gemini: { name: "Gemini", desc: "Google · Research & structured data" },
+  perplexity: { name: "Perplexity", desc: "Real-time web search" },
+  chatgpt: { name: "ChatGPT", desc: "OpenAI · Versatile all-rounder" },
+};
+
+export const CARDS: PromptCard[] = [
+  { id:"R01", cat:"research", title:"Trend Mapping", tool:"gemini", level:1, tagline:"Identify emerging patterns in a market or domain.", prompt:"You are a strategic researcher. Analyse: [TOPIC]\n\n1. 3 emerging trends (last 12 months)\n2. What is driving each trend?\n3. Who benefits most?\n4. Signals of acceleration or slowdown?\n\nFormat as a concise research report." },
+  { id:"R02", cat:"research", title:"Competitor Deep Dive", tool:"gemini", level:2, tagline:"Dissect a competitor on positioning and vulnerabilities.", prompt:"Analyse [COMPANY NAME] as a competitor in [SECTOR].\n\n– Core positioning & value proposition\n– Top 3 strengths (with evidence)\n– Top 3 vulnerabilities or blind spots\n– How they would respond to [YOUR PRODUCT/SERVICE]\n\nUse publicly available information." },
+  { id:"R03", cat:"research", title:"User Mental Model", tool:"claude", level:2, tagline:"Reconstruct how your target user thinks about a problem.", prompt:"Step into the shoes of [USER PROFILE] struggling with [PROBLEM].\n\n1. How do they define the problem themselves?\n2. What solutions are they currently trying?\n3. What assumptions do they make (including wrong ones)?\n4. Real criteria for a good solution?\n\nWrite from empathy, not from product thinking." },
+  { id:"R04", cat:"research", title:"Assumption Mapping", tool:"claude", level:1, tagline:"Map risky assumptions before you build.", prompt:"We want to build [IDEA/PRODUCT] for [TARGET GROUP].\n\nIdentify assumptions in 3 categories:\n– Desirability: Do they actually want this?\n– Viability: Can we make money from it?\n– Feasibility: Can we build it?\n\nRank by risk (high/medium/low). What do we validate first?" },
+  { id:"R05", cat:"research", title:"Research Synthesis", tool:"gemini", level:1, tagline:"Condense existing research into actionable insights.", prompt:"Synthesise recent findings on: [TOPIC]\n\n– What do we know for certain?\n– What is still uncertain or contested?\n– Gaps in existing research?\n– 3 concrete, action-worthy insights\n\nCite sources briefly." },
+  { id:"R06", cat:"research", title:"Interview Script", tool:"claude", level:2, tagline:"Generate a depth interview guide for user research.", prompt:"Qualitative research on [TOPIC] with [TARGET GROUP].\nCentral research question: [QUESTION]\n\nCreate an interview guide:\n– 3 warm-up questions\n– 5–7 core questions (open, behaviour-focused)\n– 2–3 follow-up techniques\n– 1 closing question\n\nAvoid leading questions." },
+  { id:"R07", cat:"research", title:"Data Pattern Spotter", tool:"claude", level:3, tagline:"Find meaningful patterns in raw research data.", prompt:"Notes from [N] user interviews about [TOPIC]:\n\n[PASTE RAW DATA HERE]\n\nAnalyse:\n1. Recurring themes (≥3 times)\n2. Surprising or contradictory statements\n3. Emotional peaks (frustration or delight)\n4. Underlying needs behind stated wants\n\nCreate an affinity-like structure." },
+  { id:"R08", cat:"research", title:"Market Sizing", tool:"gemini", level:3, tagline:"Build a bottom-up TAM/SAM/SOM rationale.", prompt:"Estimate market size for [PRODUCT/SERVICE] in [REGION].\n\nBottom-up approach:\n1. Define the ideal customer (ICP)\n2. Estimate number of potential customers\n3. Determine average annual value per customer\n4. Calculate TAM, SAM, SOM\n\nBe transparent about assumptions and uncertainties." },
+  { id:"R09", cat:"research", title:"Analogy Research", tool:"claude", level:1, tagline:"Find relevant parallels in other industries.", prompt:"Our product/problem: [DESCRIPTION]\n\nFind 3–5 analogies from other industries that solved a structurally similar problem.\n\nPer analogy:\n– What was the problem?\n– How did they solve it?\n– Which principle can we borrow?\n\nGo beyond the obvious comparisons." },
+  { id:"R10", cat:"research", title:"Regulatory Landscape", tool:"perplexity", level:2, tagline:"Map relevant laws and regulations.", prompt:"Product in [SECTOR], market [COUNTRY/REGION].\n\nOverview of:\n– Relevant legislation (current)\n– Upcoming policy changes\n– Compliance requirements for our product type\n– Risks of non-compliance\n\nWhat needs urgent attention vs. later?" },
+  { id:"R11", cat:"research", title:"Weak Signal Detector", tool:"perplexity", level:3, tagline:"Spot early indicators of change before they go mainstream.", prompt:"Analyse [DOMAIN] for weak signals.\n\nLook for:\n– Niche communities adopting something new\n– Unexpected crossovers between industries\n– Maturing technological enablers\n– Demographic shifts at the edges\n\nWhat could be dominant in 3–5 years?" },
+  { id:"R12", cat:"research", title:"JTBD Excavator", tool:"claude", level:2, tagline:"Uncover the real job customers are trying to get done.", prompt:'Product: [NAME]\nSurface need: [WHAT THEY SAY THEY WANT]\n\nJTBD analysis:\n1. Functional job: What are they literally trying to do?\n2. Emotional job: How do they want to feel?\n3. Social job: How do they want to be seen?\n4. Negative job: What do they want to avoid?\n\nFormulate 3 statements: "When I [SITUATION], I want [MOTIVATION], so that I [OUTCOME]"' },
+  { id:"W01", cat:"writing", title:"UX Copy Review", tool:"claude", level:1, tagline:"Improve interface text for clarity and tone.", prompt:"Review the UX copy for [PRODUCT/PAGE]:\n\n[PASTE COPY HERE]\n\nEvaluate on:\n– Clarity: does a new user understand this immediately?\n– Tone: does this match [BRAND]?\n– Action: is it clear what the user should do?\n– Length: is there redundant text?\n\nProvide improved versions per element." },
+  { id:"W02", cat:"writing", title:"Design Brief Writer", tool:"claude", level:1, tagline:"Turn rough input into a sharp design brief.", prompt:"Create a design brief:\n\nProject: [NAME]\nGoal: [WHAT WE ARE TRYING TO ACHIEVE]\nAudience: [WHO]\nConstraints: [LIMITATIONS]\n\n1. Problem statement (1 paragraph)\n2. Objective (measurable)\n3. Target audience (specific)\n4. Deliverables\n5. Success criteria" },
+  { id:"W03", cat:"writing", title:"Persona Narrative", tool:"claude", level:2, tagline:"Write a lifelike persona that builds team empathy.", prompt:"Persona narrative for [USER TYPE].\nAvailable data: [INSIGHTS]\n\nWrite a description of a day in their life:\n– Starts with a relevant situation\n– Shows frustrations at the moment they need our product\n– Ends with what success looks like for them\n\nThird person, present tense. Prose, no bullet points." },
+  { id:"W04", cat:"writing", title:"Tone of Voice Calibrator", tool:"claude", level:2, tagline:"Define a brand's communication style in concrete guidelines.", prompt:'Tone of voice for [BRAND].\n\nCore values: [VALUES]\nTarget audience: [PROFILE]\n\nCreate guidelines with:\n– 4 tone principles (each 1 sentence)\n– "We are X, not Y" (5 examples)\n– 10 words we DO / DO NOT use\n– 2 before/after examples' },
+  { id:"W05", cat:"writing", title:"Microcopy Sprint", tool:"claude", level:1, tagline:"Generate 5 variants of a piece of interface text.", prompt:"5 variants of:\n\nElement: [BUTTON / PLACEHOLDER / TOOLTIP / EMPTY STATE]\nCurrent text: [TEXT]\nContext: [WHERE IN THE INTERFACE?]\nDesired feeling: [URGENT / FRIENDLY / PROFESSIONAL]\n\n1. Direct & functional\n2. Friendly & human\n3. Minimal (as short as possible)\n4. Action-oriented\n5. Your best choice + explanation" },
+  { id:"W06", cat:"writing", title:"Error Message Writer", tool:"claude", level:1, tagline:"Make error messages human, helpful and on-brand.", prompt:"Rewrite the error messages for [PRODUCT]:\n\n[PASTE EXISTING ERRORS HERE]\n\nPer message:\n– Human, non-technical description\n– What the user can do now\n– Optional empathetic opening\n\nTone: [BRAND TONE]. Max 2 sentences per message." },
+  { id:"W07", cat:"writing", title:"Pitch Deck Narrative", tool:"claude", level:3, tagline:"Write the narrative red thread for a presentation.", prompt:"Presentation of [TOPIC] to [AUDIENCE].\n\nCore message: [MESSAGE]\nEvidence/data: [POINTS]\nDesired outcome: [ACTION]\n\nNarrative structure for [N] slides:\n– Opening that grabs attention\n– Story arc with tension\n– The aha moment\n– Close with CTA\n\nPer slide: desired emotion + core message." },
+  { id:"W08", cat:"writing", title:"Landing Page Copy", tool:"claude", level:2, tagline:"Write a complete product page from hero to footer.", prompt:'Landing page for [PRODUCT].\n\nAudience: [PROFILE]\nValue proposition: [WHAT MAKES IT UNIQUE]\nBiggest objection: [OBJECTION]\nDesired action: [CTA]\n\n1. Hero: headline + subline + CTA\n2. Problem section\n3. Solution as benefits\n4. Social proof (3 quotes)\n5. FAQ (3 questions)\n6. Closing CTA' },
+  { id:"I01", cat:"ideation", title:"Concept Brainstorm", tool:"claude", level:1, tagline:"Generate a broad set of concepts around a design challenge.", prompt:"Design challenge: [DESCRIPTION]\nAudience: [WHO] | Constraints: [LIMITATIONS]\n\n12 concept ideas in 3 categories:\n– Evolutionary: improvements on existing\n– Disruptive: radically different approach\n– Analogous: inspired by another industry\n\nPer concept: name + 1 sentence. Quantity over quality." },
+  { id:"I02", cat:"ideation", title:"Crazy 8s Generator", tool:"claude", level:1, tagline:"Digital variant on the popular design sprint exercise.", prompt:'Crazy 8s for: [PROBLEM]\n\n8 radically different solution directions:\n– Each direction is fundamentally different\n– No filtering or judgement\n– Can be impossible or absurd\n– Max 2 sentences per idea\n\nSort after: most conventional → most radical.' },
+  { id:"I03", cat:"ideation", title:"How Might We Generator", tool:"claude", level:1, tagline:"Translate problems into open design questions.", prompt:'Generate 15 "How Might We..." questions:\n\nUser insight: [DESCRIPTION]\n\n– Literal (close to the problem)\n– Abstraction (one level up)\n– Reframing (flipping the problem)\n\nBest HMWs: open enough for creativity, specific enough for direction.' },
+  { id:"I04", cat:"ideation", title:"SCAMPER Application", tool:"claude", level:2, tagline:"Apply the SCAMPER framework to an existing concept.", prompt:"Existing product/concept: [DESCRIPTION]\n\nS – Substitute: What can you replace?\nC – Combine: What can you merge?\nA – Adapt: What can you adjust or borrow?\nM – Modify: Magnify or minimise?\nP – Put to other uses: How to deploy differently?\nE – Eliminate: What can you remove?\nR – Reverse: Flip or reorder?\n\nPer letter: 2 concrete ideas." },
+  { id:"I05", cat:"ideation", title:"Future Scenario Builder", tool:"claude", level:3, tagline:"Design three possible future scenarios for your product.", prompt:"Product: [NAME] | Time horizon: [E.G. 2028]\n\n3 future scenarios:\n1. Best case: everything goes well\n2. Worst case: headwinds, regulation, competition\n3. Wild card: unexpected development changes everything\n\nPer scenario: context + how our product fits + what we must do NOW to prepare." },
+  { id:"I06", cat:"ideation", title:"Worst Possible Idea", tool:"claude", level:1, tagline:"Use negative thinking to break creative blocks.", prompt:"We are stuck on: [CHALLENGE]\n\nStep 1: 10 absolutely terrible ideas (the worse the better)\nStep 2: Flip each idea into something usable\nStep 3: Select the 3 most promising inversions\n\nCreative exercise to think outside established paths." },
+  { id:"A01", cat:"analysis", title:"Heuristic Evaluation", tool:"claude", level:2, tagline:"Analyse an interface against the Nielsen heuristics.", prompt:"Heuristic evaluation of [PRODUCT/INTERFACE]:\n\n[DESCRIPTION OF THE INTERFACE]\n\nAssess against the 10 Nielsen heuristics:\n– Score per heuristic (0–4)\n– Biggest problem per heuristic\n– Concrete improvement\n\nDeep-dive on the 3 lowest-scoring." },
+  { id:"A02", cat:"analysis", title:"Usability Test Analysis", tool:"claude", level:2, tagline:"Process raw usability observations into insights.", prompt:'Observations from [N] usability tests:\n\n[PASTE RAW OBSERVATIONS]\n\nAnalyse:\n1. Tasks where users got stuck\n2. Most mentioned frustrations (verbatim)\n3. Surprising positive reactions\n4. Patterns across multiple participants\n\nPrioritise: Critical / Major / Minor' },
+  { id:"A03", cat:"analysis", title:"Funnel Drop-off Diagnosis", tool:"gemini", level:2, tagline:"Analyse where and why users drop out of a flow.", prompt:"Funnel data for [PRODUCT]:\n\n[STEP 1]: [%] → [STEP 2]: [%] → [STEP 3]: [%] → Conversion: [%]\n\n1. Where is the biggest drop-off?\n2. 3 possible causes per drop-off\n3. Which data confirms or refutes each hypothesis?\n4. Quick wins for this sprint" },
+  { id:"A04", cat:"analysis", title:"Design Critique Framework", tool:"claude", level:1, tagline:"Structure design feedback productively.", prompt:'Critique of design: [DESCRIPTION/CONTEXT]\n\nAlong 5 axes:\n1. Goal: Does the design achieve its purpose?\n2. Clarity: Is the hierarchy clear?\n3. Consistency: Does it fit the broader system?\n4. Feasibility: Implementation risks?\n5. Accessibility: Does it work for everyone?\n\nPer axis: "I like / I wish / What if"' },
+  { id:"A05", cat:"analysis", title:"Impact Effort Matrix", tool:"claude", level:1, tagline:"Prioritise a backlog with an impact-effort analysis.", prompt:"Backlog items for [PRODUCT/PROJECT]:\n\n[PASTE LIST OF ITEMS]\n\nCategorise into 4 quadrants:\n1. Quick wins (high impact, low effort) → do now\n2. Big bets (high impact, high effort) → plan\n3. Fill-ins (low impact, low effort) → when time allows\n4. Wasteful (low impact, high effort) → cut?" },
+  { id:"A06", cat:"analysis", title:"North Star Metric", tool:"claude", level:3, tagline:"Identify the metric that reflects your product's success.", prompt:"Product: [NAME]\nCore user value: [DESCRIPTION]\nCurrent metrics: [WHAT WE MEASURE NOW]\n\n1. When does a user experience real value?\n2. How do we measure this?\n3. 3 candidate metrics\n4. Per metric: leading/lagging? Gameable?\n5. Best North Star + rationale" },
+  { id:"C01", cat:"critique", title:"Steel Man Review", tool:"claude", level:3, tagline:"Build the strongest case for a design before dismantling it.", prompt:"Here is a design or proposal to critique: [PASTE DESCRIPTION]\n\nStep 1: Build the strongest possible argument that this design is exactly right.\nStep 2: Dismantle that argument point by point with equally strong counter-evidence.\nStep 3: Name the one thing worth saving regardless." },
+  { id:"C02", cat:"critique", title:"Pre-Mortem", tool:"claude", level:2, tagline:"Imagine the project failed and work backwards to prevent it.", prompt:"Our project: [DESCRIPTION]\nLaunch date: [DATE]\n\nIt is now [DATE + 6 months]. The project has failed significantly.\n\nWrite a detailed post-mortem:\n– What were the 5 causes of failure?\n– Which warning signs were visible but ignored?\n– What should have been done differently?\n\nThen: what do we do NOW to prevent each cause?" },
+  { id:"C03", cat:"critique", title:"Assumption Stress Test", tool:"claude", level:3, tagline:"Push every core assumption to its breaking point.", prompt:"Our core assumptions for [PRODUCT/STRATEGY]:\n\n[LIST ASSUMPTIONS]\n\nFor each:\n1. Minimum evidence needed to validate it?\n2. What would falsify it entirely?\n3. Confidence: high/medium/low + evidence\n4. Contingency if wrong?\n\nWhich assumption, if false, would kill the entire project?" },
+  { id:"C04", cat:"critique", title:"Ten-Stranger Test", tool:"claude", level:1, tagline:"Pressure-test a concept with 10 different reactions.", prompt:"Here is a concept I am developing: [CONCEPT]\n\nImagine it is shown to 10 completely different strangers — each from a different walk of life, age, culture, or context. Describe the genuine reaction of each person.\n\nThen summarise: most common misunderstanding + one change that would most improve first impressions." },
+  { id:"C05", cat:"critique", title:"Stakeholder Objections", tool:"claude", level:2, tagline:"Anticipate and defuse stakeholder objections before the meeting.", prompt:"Proposal to present: [DESCRIPTION]\nStakeholders in the room: [LIST WITH ROLES]\n\nFor each stakeholder:\n– Their most likely objection (be specific)\n– The fear or incentive behind that objection\n– The strongest response\n– A concession we could offer if needed\n\nPrepare me for the hardest room." },
+  { id:"C06", cat:"critique", title:"Devil's Advocate", tool:"claude", level:2, tagline:"Challenge every design decision with the best opposing argument.", prompt:"Here are the key design decisions in our project:\n\n[LIST DECISIONS]\n\nFor each decision, make the best possible argument for the opposite choice. Do not soften the critique. Then tell me whether it changes your mind and why." },
+  { id:"S01", cat:"synthesis", title:"Pattern Collapse", tool:"claude", level:2, tagline:"Distil sprawling workshop notes into tight actionable themes.", prompt:"Here are my raw notes from [WORKSHOP / RESEARCH SESSION]: [PASTE NOTES]\n\nCollapse these into:\n— 3 tension pairs (opposing forces at play)\n— 5 repeating signals (what keeps coming up)\n— 1 insight none of the participants named but the data implies" },
+  { id:"S02", cat:"synthesis", title:"Meeting to Momentum", tool:"claude", level:1, tagline:"Convert messy meeting notes into decisions and next actions.", prompt:"Here are my notes from a meeting: [PASTE NOTES]\n\nExtract and structure:\n— Decisions made (firm / provisional / deferred)\n— Open questions still unresolved\n— Actions (person responsible + deadline if stated)\n— One thing nobody said explicitly but which the group needs to address\n\nFormat for immediate sharing." },
+  { id:"S03", cat:"synthesis", title:"The One True Sentence", tool:"claude", level:3, tagline:"Force a sprawling strategy into a single sentence anyone can repeat.", prompt:"Here is everything we know about this strategy / brand / product: [PASTE ALL CONTEXT]\n\nWrite it as one sentence that:\n— A 10-year-old could understand\n— A journalist would use as a lede\n— The founding team would put on the wall\n\nThen explain what you had to cut to get there." },
+  { id:"S04", cat:"synthesis", title:"Insight Ladder", tool:"claude", level:2, tagline:"Climb from raw observations to strategic implications.", prompt:"Raw observations from [RESEARCH/PROJECT]: [PASTE DATA]\n\nBuild an insight ladder:\nLevel 1 — What happened? (observations)\nLevel 2 — What does it mean? (insights)\nLevel 3 — So what? (design implications)\nLevel 4 — Now what? (recommended actions)\n\nEach level should be meaningfully different from the one below." },
+  { id:"S05", cat:"synthesis", title:"Research-to-Brief Bridge", tool:"claude", level:2, tagline:"Transform research findings directly into a design brief.", prompt:"Research findings: [PASTE KEY FINDINGS]\nBusiness context: [CONTEXT]\nConstraints: [CONSTRAINTS]\n\nSynthesise into a design brief:\n— Reframed problem statement (based on findings)\n— Audience definition (evidence-based)\n— Design goals (derived from insights)\n— What success looks like\n— What is out of scope" },
+  { id:"S06", cat:"synthesis", title:"Strategic Pivot Memo", tool:"claude", level:3, tagline:"Articulate a change in direction without defensiveness.", prompt:'Original direction: [DESCRIPTION]\nNew direction: [DESCRIPTION]\nReason for change: [CONTEXT]\n\nWrite a strategic pivot memo:\n— Acknowledge the previous direction honestly\n— Explain what changed\n— Articulate the new direction with conviction\n— Address the "but you said..." objection\n— Clarify what stays the same\n\nTone: confident, not apologetic.' },
 ];
 
-export function getPromptById(id: string): PromptCard | undefined {
-  return prompts.find((p) => p.id === id);
+export function getCardById(id: string): PromptCard | undefined {
+  return CARDS.find((c) => c.id.toUpperCase() === id.toUpperCase());
 }

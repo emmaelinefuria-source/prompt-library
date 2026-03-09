@@ -1,172 +1,206 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { prompts, getPromptById, PromptCard } from "@/data/prompts";
-import PromptCardView from "@/components/PromptCardView";
-import ChatInterface from "@/components/ChatInterface";
-import QRScanner from "@/components/QRScanner";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { CARDS, PromptCard } from "@/data/prompts";
+import TabBar from "@/components/TabBar";
+import HomeScreen from "@/components/HomeScreen";
+import LibraryScreen from "@/components/LibraryScreen";
+import CardDetail from "@/components/CardDetail";
+import ChatScreen from "@/components/ChatScreen";
+import ScanScreen from "@/components/ScanScreen";
+import CanvasScreen from "@/components/CanvasScreen";
 
-type View = "library" | "chat";
+type Screen = "home" | "library" | "canvas" | "scan" | "detail" | "chat";
 
-export default function Home() {
-  const [view, setView] = useState<View>("library");
-  const [scanning, setScanning] = useState(false);
-  const [activePrompt, setActivePrompt] = useState<PromptCard | null>(null);
-  const [search, setSearch] = useState("");
-  const [activeCategory, setActiveCategory] = useState<string>("All");
-  const [scanMessage, setScanMessage] = useState<string>("");
+export default function App() {
+  const [currentScreen, setCurrentScreen] = useState<Screen>("home");
+  const [prevScreens, setPrevScreens] = useState<Screen[]>([]);
+  const [activeCard, setActiveCard] = useState<PromptCard | null>(null);
+  const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
+  const [customCards, setCustomCards] = useState<PromptCard[]>([]);
+  const [flash, setFlash] = useState(false);
+  const screenRef = useRef<HTMLDivElement>(null);
 
-  const categories = ["All", ...Array.from(new Set(prompts.map((p) => p.category)))];
-
-  const filtered = prompts.filter((p) => {
-    const matchesSearch =
-      p.title.toLowerCase().includes(search.toLowerCase()) ||
-      p.description.toLowerCase().includes(search.toLowerCase()) ||
-      p.category.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = activeCategory === "All" || p.category === activeCategory;
-    return matchesSearch && matchesCategory;
-  });
-
-  const handleScan = useCallback((result: string) => {
-    setScanning(false);
-    // The QR code contains the prompt ID or a URL with the prompt ID
-    let promptId = result;
-
-    // Handle URL format: extract the id parameter or path
+  // Load persisted state
+  useEffect(() => {
     try {
-      const url = new URL(result);
-      promptId = url.searchParams.get("id") || url.pathname.split("/").pop() || result;
-    } catch {
-      // Not a URL, treat as plain prompt ID
-    }
-
-    const card = getPromptById(promptId);
-    if (card) {
-      setActivePrompt(card);
-      setScanMessage("");
-    } else {
-      setScanMessage(`Card not found for: "${promptId}". Try scanning again or browse the library.`);
-    }
+      const saved = localStorage.getItem("ai-canvas-starred");
+      if (saved) setStarredIds(new Set(JSON.parse(saved)));
+    } catch {}
+    try {
+      const saved = localStorage.getItem("ai-canvas-custom");
+      if (saved) setCustomCards(JSON.parse(saved));
+    } catch {}
   }, []);
 
-  const handleUsePrompt = (card: PromptCard) => {
-    setActivePrompt(card);
-    setView("chat");
-  };
+  // Persist starred
+  useEffect(() => {
+    try {
+      localStorage.setItem("ai-canvas-starred", JSON.stringify([...starredIds]));
+    } catch {}
+  }, [starredIds]);
 
-  if (view === "chat" && activePrompt) {
-    return (
-      <ChatInterface
-        initialPrompt={activePrompt.prompt}
-        promptTitle={activePrompt.title}
-        onBack={() => setView("library")}
-      />
-    );
+  // Persist custom cards
+  useEffect(() => {
+    try {
+      localStorage.setItem("ai-canvas-custom", JSON.stringify(customCards));
+    } catch {}
+  }, [customCards]);
+
+  function goTo(screen: Screen) {
+    setPrevScreens((prev) => [...prev, currentScreen]);
+    setCurrentScreen(screen);
+  }
+
+  function goBack() {
+    setPrevScreens((prev) => {
+      const stack = [...prev];
+      const last = stack.pop();
+      if (last !== undefined) {
+        setCurrentScreen(last);
+      }
+      return stack;
+    });
+  }
+
+  function switchTab(tab: string) {
+    setCurrentScreen(tab as Screen);
+    setPrevScreens([]);
+  }
+
+  const toggleStar = useCallback((id: string) => {
+    setStarredIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  function handleCardClick(card: PromptCard) {
+    setActiveCard(card);
+    goTo("detail");
+  }
+
+  const handleCardScanned = useCallback(
+    (cardId: string) => {
+      const allCards = [...customCards, ...CARDS];
+      const card = allCards.find(
+        (c) => c.id.toUpperCase() === cardId.toUpperCase()
+      );
+      if (card) {
+        setFlash(true);
+        setTimeout(() => setFlash(false), 120);
+        setActiveCard(card);
+        // Replace scan in the navigation stack
+        setPrevScreens((prev) => {
+          const stack = [...prev];
+          // Remove scan from stack if it's there
+          const idx = stack.lastIndexOf("scan");
+          if (idx !== -1) stack.splice(idx, 1);
+          stack.push("home");
+          return stack;
+        });
+        setCurrentScreen("detail");
+      }
+    },
+    [customCards]
+  );
+
+  function handleChat(card: PromptCard) {
+    setActiveCard(card);
+    goTo("chat");
+  }
+
+  function handleSaveCanvasCard(card: PromptCard) {
+    setCustomCards((prev) => [card, ...prev]);
+  }
+
+  const showTabBar = !["scan", "detail", "chat"].includes(currentScreen);
+
+  function screenClass(id: Screen) {
+    return `screen${currentScreen === id ? " active" : ""}`;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">Prompt Library</h1>
-              <p className="text-sm text-gray-500">
-                Discover what AI can do for you
-              </p>
-            </div>
-            <button
-              onClick={() => setScanning(true)}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2.5 rounded-xl transition-colors flex items-center gap-2 text-sm"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
-                />
-              </svg>
-              Scan
-            </button>
-          </div>
+    <>
+      <div className={`flash-overlay${flash ? " on" : ""}`} />
 
-          {/* Search */}
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search prompts..."
-            className="w-full border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-3 text-gray-800"
+      <div className="app" ref={screenRef}>
+        {/* HOME */}
+        <div className={screenClass("home")} style={{ background: "var(--bg)" }}>
+          <HomeScreen
+            cards={CARDS}
+            customCards={customCards}
+            starredIds={starredIds}
+            onCardClick={handleCardClick}
+            onToggleStar={toggleStar}
+            onScan={() => goTo("scan")}
           />
-
-          {/* Category tabs */}
-          <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 scrollbar-hide">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                  activeCategory === cat
-                    ? "bg-indigo-600 text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
         </div>
-      </div>
 
-      {/* Scan message */}
-      {scanMessage && (
-        <div className="max-w-2xl mx-auto px-4 pt-4">
-          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 text-sm text-yellow-800">
-            {scanMessage}
-          </div>
+        {/* LIBRARY */}
+        <div className={screenClass("library")} style={{ background: "var(--bg)" }}>
+          <LibraryScreen
+            cards={CARDS}
+            customCards={customCards}
+            starredIds={starredIds}
+            onCardClick={handleCardClick}
+            onToggleStar={toggleStar}
+          />
         </div>
-      )}
 
-      {/* Scanned card highlight */}
-      {activePrompt && view === "library" && (
-        <div className="max-w-2xl mx-auto px-4 pt-4">
-          <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-4">
-            <p className="text-xs font-medium text-indigo-600 mb-2">
-              Scanned Card
-            </p>
-            <PromptCardView card={activePrompt} onUsePrompt={handleUsePrompt} />
-          </div>
+        {/* CANVAS */}
+        <div className={screenClass("canvas")} style={{ background: "var(--bg)" }}>
+          <CanvasScreen
+            customCards={customCards}
+            starredIds={starredIds}
+            onCardClick={handleCardClick}
+            onToggleStar={toggleStar}
+            onSaveCard={handleSaveCanvasCard}
+          />
         </div>
-      )}
 
-      {/* Prompt cards grid */}
-      <div className="max-w-2xl mx-auto px-4 py-4 space-y-4">
-        {filtered.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
-            No prompts found. Try a different search.
-          </div>
-        ) : (
-          filtered.map((card) => (
-            <PromptCardView
-              key={card.id}
-              card={card}
-              onUsePrompt={handleUsePrompt}
+        {/* SCAN */}
+        <div className={screenClass("scan")} style={{ background: "#000" }}>
+          {currentScreen === "scan" && (
+            <ScanScreen
+              onCardScanned={handleCardScanned}
+              onBack={goBack}
+              allCards={[...customCards, ...CARDS]}
             />
-          ))
+          )}
+        </div>
+
+        {/* DETAIL */}
+        <div className={screenClass("detail")} style={{ background: "#f8f8f5" }}>
+          {activeCard && currentScreen === "detail" && (
+            <CardDetail
+              card={activeCard}
+              starred={starredIds.has(activeCard.id)}
+              onToggleStar={toggleStar}
+              onBack={goBack}
+              onChat={handleChat}
+            />
+          )}
+        </div>
+
+        {/* CHAT */}
+        <div className={screenClass("chat")} style={{ background: "var(--bg)" }}>
+          {activeCard && currentScreen === "chat" && (
+            <ChatScreen card={activeCard} onBack={goBack} />
+          )}
+        </div>
+
+        {/* TAB BAR */}
+        {showTabBar && (
+          <TabBar
+            activeTab={currentScreen}
+            onTabChange={switchTab}
+            onScan={() => goTo("scan")}
+          />
         )}
       </div>
-
-      {/* QR Scanner overlay */}
-      {scanning && (
-        <QRScanner onScan={handleScan} onClose={() => setScanning(false)} />
-      )}
-    </div>
+    </>
   );
 }

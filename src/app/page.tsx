@@ -9,8 +9,9 @@ import CardDetail from "@/components/CardDetail";
 import ChatScreen from "@/components/ChatScreen";
 import ScanScreen from "@/components/ScanScreen";
 import CanvasScreen from "@/components/CanvasScreen";
+import SkillsRunner from "@/components/SkillsRunner";
 
-type Screen = "home" | "library" | "canvas" | "scan" | "detail" | "chat";
+type Screen = "home" | "library" | "canvas" | "scan" | "detail" | "chat" | "skills";
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>("home");
@@ -123,7 +124,7 @@ export default function App() {
     setCustomCards((prev) => [card, ...prev]);
   }
 
-  const showTabBar = !["scan", "detail", "chat"].includes(currentScreen);
+  const showTabBar = !["scan", "detail", "chat", "skills"].includes(currentScreen);
 
   function screenClass(id: Screen) {
     return `screen${currentScreen === id ? " active" : ""}`;
@@ -143,6 +144,7 @@ export default function App() {
             onCardClick={handleCardClick}
             onToggleStar={toggleStar}
             onScan={() => goTo("scan")}
+            onSkills={() => goTo("skills")}
           />
         </div>
 
@@ -154,6 +156,7 @@ export default function App() {
             starredIds={starredIds}
             onCardClick={handleCardClick}
             onToggleStar={toggleStar}
+            allCards={[...customCards, ...CARDS]}
           />
         </div>
 
@@ -197,6 +200,13 @@ export default function App() {
         <div className={screenClass("chat")} style={{ background: "var(--bg)" }}>
           {activeCard && currentScreen === "chat" && (
             <ChatScreen card={activeCard} onBack={goBack} customPrompt={customPrompt} />
+          )}
+        </div>
+
+        {/* SKILLS */}
+        <div className={screenClass("skills")} style={{ background: "var(--bg)" }}>
+          {currentScreen === "skills" && (
+            <SkillsRunner onBack={goBack} />
           )}
         </div>
 

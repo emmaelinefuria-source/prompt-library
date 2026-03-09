@@ -38,6 +38,7 @@ interface HomeScreenProps {
   onCardClick: (card: PromptCard) => void;
   onToggleStar: (id: string) => void;
   onScan: () => void;
+  onSkills: () => void;
 }
 
 const FILTER_KEYS = [
@@ -60,6 +61,7 @@ export default function HomeScreen({
   onCardClick,
   onToggleStar,
   onScan,
+  onSkills,
 }: HomeScreenProps) {
   const [selectedCat, setSelectedCat] = useState("all");
   const [recentHistory, setRecentHistory] = useState<HistoryEntry[]>([]);
@@ -140,6 +142,28 @@ export default function HomeScreen({
             <div className="scan-cta-sub">Point at the QR code on any physical prompt card</div>
           </div>
           <div className="scan-cta-arrow">&rsaquo;</div>
+        </div>
+
+        {/* Skills CTA */}
+        <div className="scan-cta" onClick={onSkills} style={{
+          background: "linear-gradient(135deg, #f0eef8 0%, #eef3fe 100%)",
+          borderColor: "rgba(124,95,207,0.16)",
+        }}>
+          <div className="scan-cta-icon" style={{
+            background: "rgba(124,95,207,0.14)",
+            borderColor: "rgba(124,95,207,0.28)",
+          }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7c5fcf" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="16 3 21 3 21 8" /><line x1="4" y1="20" x2="21" y2="3" />
+              <polyline points="21 16 21 21 16 21" /><line x1="15" y1="15" x2="21" y2="21" />
+              <line x1="4" y1="4" x2="9" y2="9" />
+            </svg>
+          </div>
+          <div className="scan-cta-text">
+            <div className="scan-cta-name">Skills</div>
+            <div className="scan-cta-sub">Run AI workflows: research, reports, and chained pipelines</div>
+          </div>
+          <div className="scan-cta-arrow" style={{ color: "rgba(124,95,207,0.6)" }}>&rsaquo;</div>
         </div>
 
         {/* Category pills */}

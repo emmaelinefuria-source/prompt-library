@@ -3,6 +3,15 @@
 import { useEffect, useState, useMemo } from "react";
 import { PromptCard, COLORS, CATEGORIES, MODELS, CARDS } from "@/data/prompts";
 
+interface Collection {
+  id: string;
+  name: string;
+  cardIds: string[];
+  created: string;
+}
+
+const COLLECTIONS_KEY = "ai-canvas-collections";
+
 interface CardDetailProps {
   card: PromptCard;
   starred: boolean;
@@ -22,6 +31,41 @@ export default function CardDetail({
 }: CardDetailProps) {
   const [showToast, setShowToast] = useState(false);
   const [placeholderValues, setPlaceholderValues] = useState<Record<string, string>>({});
+  const [collections, setCollections] = useState<Collection[]>([]);
+  const [showCollectionPicker, setShowCollectionPicker] = useState(false);
+  const [collectionToast, setCollectionToast] = useState("");
+
+  // Load collections
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(COLLECTIONS_KEY);
+      if (raw) setCollections(JSON.parse(raw));
+    } catch {}
+  }, []);
+
+  function handleAddToCollection(colId: string) {
+    try {
+      const raw = localStorage.getItem(COLLECTIONS_KEY);
+      const cols: Collection[] = raw ? JSON.parse(raw) : [];
+      const col = cols.find((c) => c.id === colId);
+      if (!col) return;
+
+      if (col.cardIds.includes(card.id)) {
+        // Remove from collection
+        col.cardIds = col.cardIds.filter((id) => id !== card.id);
+        setCollectionToast(`Removed from "${col.name}"`);
+      } else {
+        // Add to collection
+        col.cardIds.push(card.id);
+        setCollectionToast(`Added to "${col.name}"`);
+      }
+
+      localStorage.setItem(COLLECTIONS_KEY, JSON.stringify(cols));
+      setCollections(cols);
+      setShowCollectionPicker(false);
+      setTimeout(() => setCollectionToast(""), 2000);
+    } catch {}
+  }
 
   const color = COLORS[card.cat] || COLORS.research;
   const catLabel = CATEGORIES[card.cat] || card.cat;
@@ -208,6 +252,50 @@ export default function CardDetail({
                 ))}
               </div>
             </div>
+          </div>
+
+          {/* Add to Collection */}
+          <div style={{ marginBottom: 18 }}>
+            <button
+              className="collection-toggle-btn"
+              onClick={() => setShowCollectionPicker(!showCollectionPicker)}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                <line x1="12" y1="11" x2="12" y2="17" /><line x1="9" y1="14" x2="15" y2="14" />
+              </svg>
+              Add to Collection
+            </button>
+
+            {showCollectionPicker && (
+              <div className="collection-picker">
+                {collections.length === 0 ? (
+                  <div style={{ padding: "12px 0", color: "var(--text-3)", fontSize: 12 }}>
+                    No collections yet. Create one in the Library tab.
+                  </div>
+                ) : (
+                  collections.map((col) => {
+                    const isInCollection = col.cardIds.includes(card.id);
+                    return (
+                      <button
+                        key={col.id}
+                        className={`collection-picker-item${isInCollection ? " in-collection" : ""}`}
+                        onClick={() => handleAddToCollection(col.id)}
+                      >
+                        <span>{col.name}</span>
+                        <span style={{ fontSize: 11, color: isInCollection ? "#10a37f" : "rgba(0,0,0,0.3)" }}>
+                          {isInCollection ? "Remove" : "Add"}
+                        </span>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            )}
+
+            {collectionToast && (
+              <div className="collection-toast">{collectionToast}</div>
+            )}
           </div>
 
           {/* Prompt section */}

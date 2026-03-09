@@ -14,8 +14,8 @@ interface ChatInterfaceProps {
 }
 
 const MODELS = [
-  { id: "gemini-flash", name: "Gemini Flash", description: "Fast & smart" },
-  { id: "gemini-pro", name: "Gemini Lite", description: "Quick responses" },
+  { id: "gemini-3-flash", name: "Gemini 3 Flash", description: "Most capable" },
+  { id: "gemini-3-flash-lite", name: "Gemini 3 Flash Lite", description: "Fast & lightweight" },
 ];
 
 export default function ChatInterface({
@@ -28,7 +28,7 @@ export default function ChatInterface({
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(true);
-  const [model, setModel] = useState("gemini-flash");
+  const [model, setModel] = useState("gemini-3-flash");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const hasSentInitial = useRef(false);
 

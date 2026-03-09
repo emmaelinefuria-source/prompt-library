@@ -251,10 +251,10 @@ html, body {
 }
 .copy-toast.show { opacity: 1; transform: none; }
 
-/* CHAT BUTTON */
+/* CHAT BUTTON — detail screen hides tab bar so don't add tab-h */
 .chat-btn-wrap {
   position: fixed; bottom: 0; left: 0; right: 0;
-  padding: 12px 20px calc(var(--sab) + var(--tab-h) + 8px);
+  padding: 12px 20px calc(var(--sab) + 16px);
   background: linear-gradient(0deg, #f8f8f5 65%, transparent);
   z-index: 50; pointer-events: none;
 }

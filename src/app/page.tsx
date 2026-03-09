@@ -19,6 +19,7 @@ export default function App() {
   const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
   const [customCards, setCustomCards] = useState<PromptCard[]>([]);
   const [flash, setFlash] = useState(false);
+  const loadedRef = useRef(false);
   const screenRef = useRef<HTMLDivElement>(null);
 
   // Load persisted state
@@ -31,17 +32,20 @@ export default function App() {
       const saved = localStorage.getItem("ai-canvas-custom");
       if (saved) setCustomCards(JSON.parse(saved));
     } catch {}
+    loadedRef.current = true;
   }, []);
 
-  // Persist starred
+  // Persist starred (only after initial load)
   useEffect(() => {
+    if (!loadedRef.current) return;
     try {
       localStorage.setItem("ai-canvas-starred", JSON.stringify([...starredIds]));
     } catch {}
   }, [starredIds]);
 
-  // Persist custom cards
+  // Persist custom cards (only after initial load)
   useEffect(() => {
+    if (!loadedRef.current) return;
     try {
       localStorage.setItem("ai-canvas-custom", JSON.stringify(customCards));
     } catch {}

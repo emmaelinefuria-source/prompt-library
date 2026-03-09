@@ -1,8 +1,35 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { PromptCard, CATEGORIES, COLORS } from "@/data/prompts";
+import React, { useState, useMemo, useEffect } from "react";
+import { PromptCard, CATEGORIES, COLORS, MODELS } from "@/data/prompts";
 import CardRow from "./CardRow";
+
+interface HistoryEntry {
+  cardId: string;
+  cardTitle: string;
+  model: string;
+  prompt: string;
+  timestamp: number;
+}
+
+interface InsightsData {
+  totalSessions: number;
+  savedNotes: number;
+  thumbsUpPct: number | null;
+}
+
+function formatRelativeTime(ts: number): string {
+  const diff = Date.now() - ts;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return "Yesterday";
+  if (days < 7) return `${days}d ago`;
+  return `${Math.floor(days / 7)}w ago`;
+}
 
 interface HomeScreenProps {
   cards: PromptCard[];
@@ -35,6 +62,38 @@ export default function HomeScreen({
   onScan,
 }: HomeScreenProps) {
   const [selectedCat, setSelectedCat] = useState("all");
+  const [recentHistory, setRecentHistory] = useState<HistoryEntry[]>([]);
+  const [insights, setInsights] = useState<InsightsData>({ totalSessions: 0, savedNotes: 0, thumbsUpPct: null });
+
+  // Load history and insights from localStorage
+  useEffect(() => {
+    try {
+      const histRaw = localStorage.getItem("ai-canvas-history");
+      if (histRaw) {
+        const all: HistoryEntry[] = JSON.parse(histRaw);
+        setRecentHistory(all.sort((a, b) => b.timestamp - a.timestamp).slice(0, 5));
+      }
+    } catch {}
+
+    try {
+      const histRaw = localStorage.getItem("ai-canvas-history");
+      const notesRaw = localStorage.getItem("ai-canvas-notes");
+      const fbRaw = localStorage.getItem("ai-canvas-feedback");
+
+      const histArr = histRaw ? JSON.parse(histRaw) : [];
+      const notesArr = notesRaw ? JSON.parse(notesRaw) : [];
+      const fbArr: { rating: string }[] = fbRaw ? JSON.parse(fbRaw) : [];
+
+      const upCount = fbArr.filter((f) => f.rating === "up").length;
+      const totalFb = fbArr.length;
+
+      setInsights({
+        totalSessions: histArr.length,
+        savedNotes: notesArr.length,
+        thumbsUpPct: totalFb > 0 ? Math.round((upCount / totalFb) * 100) : null,
+      });
+    } catch {}
+  }, []);
 
   const allCards = useMemo(() => [...customCards, ...cards], [cards, customCards]);
 
@@ -108,6 +167,64 @@ export default function HomeScreen({
             );
           })}
         </div>
+
+        {/* Insights Card */}
+        {(insights.totalSessions > 0 || insights.savedNotes > 0) && (
+          <div className="insights-card">
+            <div className="insights-title">Insights</div>
+            <div className="insights-stats">
+              <div className="insights-stat">
+                <div className="insights-stat-value">{insights.totalSessions}</div>
+                <div className="insights-stat-label">Sessions</div>
+              </div>
+              <div className="insights-stat">
+                <div className="insights-stat-value">{insights.savedNotes}</div>
+                <div className="insights-stat-label">Notes</div>
+              </div>
+              <div className="insights-stat">
+                <div className="insights-stat-value">
+                  {insights.thumbsUpPct !== null ? `${insights.thumbsUpPct}%` : "—"}
+                </div>
+                <div className="insights-stat-label">Positive</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Recent Activity */}
+        {recentHistory.length > 0 && (
+          <div className="recent-activity">
+            <div className="recent-activity-head">
+              <div className="recent-activity-title">Recent Activity</div>
+            </div>
+            <div className="recent-activity-list">
+              {recentHistory.map((entry, i) => {
+                const modelInfo = MODELS[entry.model];
+                return (
+                  <div
+                    key={`${entry.cardId}-${entry.timestamp}-${i}`}
+                    className="recent-activity-row"
+                    onClick={() => {
+                      const found = [...customCards, ...cards].find(
+                        (c) => c.id === entry.cardId
+                      );
+                      if (found) onCardClick(found);
+                    }}
+                  >
+                    <div className="recent-activity-info">
+                      <div className="recent-activity-card-title">{entry.cardTitle}</div>
+                      <div className="recent-activity-prompt">{entry.prompt}</div>
+                    </div>
+                    <div className="recent-activity-meta">
+                      <span className="recent-activity-model">{modelInfo?.name || entry.model}</span>
+                      <span className="recent-activity-time">{formatRelativeTime(entry.timestamp)}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* My Prompts */}
         {myPrompts.length > 0 && (

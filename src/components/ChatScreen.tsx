@@ -42,6 +42,15 @@ const MODEL_ORDER = ["gemini", "claude", "chatgpt", "perplexity"];
 
 const NOTES_KEY = "ai-canvas-notes";
 const FEEDBACK_KEY = "ai-canvas-feedback";
+const HISTORY_KEY = "ai-canvas-history";
+
+interface HistoryEntry {
+  cardId: string;
+  cardTitle: string;
+  model: string;
+  prompt: string;
+  timestamp: number;
+}
 
 export default function ChatScreen({ card, onBack, customPrompt }: ChatScreenProps) {
   const initialPrompt = customPrompt || card.prompt;
@@ -88,11 +97,27 @@ export default function ChatScreen({ card, onBack, customPrompt }: ChatScreenPro
     inputRef.current?.focus();
   }, []);
 
-  // Send the initial prompt automatically on mount
+  // Send the initial prompt automatically on mount and save history entry
   useEffect(() => {
     if (hasSentInitial.current) return;
     hasSentInitial.current = true;
     sendToAPI([{ role: "user" as const, content: initialPrompt }], card.tool);
+
+    // Save history entry
+    try {
+      const raw = localStorage.getItem(HISTORY_KEY);
+      const history: HistoryEntry[] = raw ? JSON.parse(raw) : [];
+      history.push({
+        cardId: card.id,
+        cardTitle: card.title,
+        model: card.tool,
+        prompt: initialPrompt.slice(0, 100),
+        timestamp: Date.now(),
+      });
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    } catch {
+      // ignore storage errors
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

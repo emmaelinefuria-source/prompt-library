@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { PromptCard, COLORS, CATEGORIES, MODELS } from "@/data/prompts";
+import { PromptCard, COLORS, CATEGORIES, MODELS, CARDS } from "@/data/prompts";
 
 interface CardDetailProps {
   card: PromptCard;
@@ -9,6 +9,7 @@ interface CardDetailProps {
   onToggleStar: (id: string) => void;
   onBack: () => void;
   onChat: (card: PromptCard, customPrompt?: string) => void;
+  onCardClick?: (card: PromptCard) => void;
 }
 
 export default function CardDetail({
@@ -17,6 +18,7 @@ export default function CardDetail({
   onToggleStar,
   onBack,
   onChat,
+  onCardClick,
 }: CardDetailProps) {
   const [showToast, setShowToast] = useState(false);
   const [placeholderValues, setPlaceholderValues] = useState<Record<string, string>>({});
@@ -52,6 +54,28 @@ export default function CardDetail({
   }, [card.prompt, placeholders, placeholderValues]);
 
   const hasAnyValues = Object.values(placeholderValues).some((v) => v && v.trim());
+
+  // Related prompts: same category or same tool, excluding current card
+  const relatedCards = useMemo(() => {
+    const candidates = CARDS.filter(
+      (c) => c.id !== card.id && (c.cat === card.cat || c.tool === card.tool)
+    );
+    // Prioritize same category, then same tool
+    const sameCat = candidates.filter((c) => c.cat === card.cat);
+    const sameTool = candidates.filter((c) => c.tool === card.tool && c.cat !== card.cat);
+    const combined = [...sameCat, ...sameTool];
+    // Deduplicate and take up to 4
+    const seen = new Set<string>();
+    const result: PromptCard[] = [];
+    for (const c of combined) {
+      if (!seen.has(c.id)) {
+        seen.add(c.id);
+        result.push(c);
+      }
+      if (result.length >= 4) break;
+    }
+    return result;
+  }, [card.id, card.cat, card.tool]);
 
   // Auto-copy prompt to clipboard on mount
   useEffect(() => {
@@ -229,6 +253,38 @@ export default function CardDetail({
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Related Prompts */}
+          {relatedCards.length > 0 && (
+            <div className="related-prompts">
+              <div className="det-section-label" style={{ marginTop: 20 }}>Related Prompts</div>
+              <div className="related-prompts-scroll">
+                {relatedCards.map((rc) => {
+                  const rcColor = COLORS[rc.cat] || COLORS.research;
+                  const rcCatLabel = CATEGORIES[rc.cat] || rc.cat;
+                  return (
+                    <div
+                      key={rc.id}
+                      className="related-prompt-card"
+                      onClick={() => onCardClick?.(rc)}
+                    >
+                      <div className="related-prompt-title">{rc.title}</div>
+                      <div
+                        className="related-prompt-badge"
+                        style={{
+                          background: rcColor.bg,
+                          border: `1px solid ${rcColor.b}`,
+                          color: rcColor.hex,
+                        }}
+                      >
+                        {rcCatLabel}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>

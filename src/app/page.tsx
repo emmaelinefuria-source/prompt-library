@@ -188,6 +188,7 @@ export default function App() {
               onToggleStar={toggleStar}
               onBack={goBack}
               onChat={handleChat}
+              onCardClick={handleCardClick}
             />
           )}
         </div>
